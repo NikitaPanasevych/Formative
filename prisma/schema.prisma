@@ -1,0 +1,61 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  name      String?
+  createdAt DateTime   @default(now())
+  forms     Form[] // One-to-many relationship with forms
+  responses Response[] // One-to-many relationship with responses
+}
+
+model Form {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  createdAt   DateTime   @default(now())
+  fields      Field[] // One-to-many relationship
+  responses   Response[] // One-to-many relationship
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+}
+
+model Field {
+  id       String    @id @default(uuid())
+  label    String
+  type     FieldType // Enum for field types
+  options  Json? // JSON for dropdown/radio/checkbox options
+  required Boolean   @default(false)
+  order    Int // Ordering of the fields in the form
+  formId   String
+  form     Form      @relation(fields: [formId], references: [id])
+}
+
+model Response {
+  id        String   @id @default(uuid())
+  formId    String
+  form      Form     @relation(fields: [formId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  answers   Json // JSON to store responses for fields
+}
+
+enum FieldType {
+  TEXT
+  TEXTAREA
+  SELECT
+  RADIO
+  CHECKBOX
+  NUMBER
+  DATE
+  EMAIL
+}
